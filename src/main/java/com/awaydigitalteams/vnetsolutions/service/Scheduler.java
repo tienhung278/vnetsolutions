@@ -1,7 +1,12 @@
 package com.awaydigitalteams.vnetsolutions.service;
 
+import com.awaydigitalteams.vnetsolutions.kafka.KafkaProducer;
 import com.awaydigitalteams.vnetsolutions.model.Sale;
+import com.awaydigitalteams.vnetsolutions.model.SaleProduct;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -21,13 +26,19 @@ import java.util.List;
 @Component
 public class Scheduler {
 
-    String baseFolder = "sales/";
-    String archiveFolder = "sales_archive/";
+    @Value("${folder.source}")
+    private String baseFolder;
+    @Value("${folder.archive}")
+    private String archiveFolder;
     private final SaleServices saleServices;
+    private KafkaProducer producer;
+    private ObjectMapper mapper;
 
     @Autowired
-    public Scheduler(SaleServices saleServices) {
+    public Scheduler(SaleServices saleServices, KafkaProducer producer) {
         this.saleServices = saleServices;
+        this.producer = producer;
+        this.mapper = new ObjectMapper();
     }
 
     @Scheduled(fixedRate = 60000)
@@ -42,9 +53,10 @@ public class Scheduler {
                 sales.add(createSaleInstance(line));
             }
             reader.close();
-            archiveFile(list.get(0));
-            var newSales = saleServices.getUnitsRevenueByProduct(sales);
-            System.out.println(newSales);
+            //archiveFile(list.get(0));
+            List<SaleProduct> saleProducts = saleServices.getUnitsRevenueByProduct(sales);
+            String message = mapper.writeValueAsString(saleProducts);
+            producer.send(message);
         }
     }
 
