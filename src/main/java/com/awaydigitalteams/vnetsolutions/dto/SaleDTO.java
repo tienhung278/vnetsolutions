@@ -1,15 +1,16 @@
-package com.awaydigitalteams.vnetsolutions.model;
+package com.awaydigitalteams.vnetsolutions.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
-public class Sale {
-    LocalDate salesDate;
+@NoArgsConstructor
+public class SaleDTO {
+    String salesDate;
     String storeName;
     String productName;
     Long salesUnits;
